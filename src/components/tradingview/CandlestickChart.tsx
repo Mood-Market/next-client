@@ -155,14 +155,14 @@ export default function CandlestickChart() {
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 400,
+      height: chartContainerRef.current.clientHeight,
       layout: {
-        background: { type: ColorType.Solid, color: "#1a1a1a" },
+        background: { type: ColorType.Solid, color: "#09090b" },
         textColor: "#d1d5db",
       },
       grid: {
-        vertLines: { color: "#2a2a2a" },
-        horzLines: { color: "#2a2a2a" },
+        vertLines: { color: "#27272a" },
+        horzLines: { color: "#27272a" },
       },
     });
 
@@ -186,6 +186,7 @@ export default function CandlestickChart() {
       if (chartContainerRef.current) {
         chart.applyOptions({
           width: chartContainerRef.current.clientWidth,
+          height: chartContainerRef.current.clientHeight,
         });
       }
     };
@@ -201,174 +202,163 @@ export default function CandlestickChart() {
   const timeframes: Timeframe[] = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"];
 
   return (
-    <div style={{ width: "100%" }}>
-      {/* Date Selector */}
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "#09090b",
+      }}
+    >
+      {/* Compact Header */}
       <div
         style={{
-          marginBottom: "16px",
+          padding: "12px 16px",
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           gap: "12px",
+          borderBottom: "1px solid #27272a",
+          flexShrink: 0,
         }}
       >
-        <button
-          onClick={() => changeDate(-1)}
-          style={{
-            padding: "8px 12px",
-            border: "1px solid #3a3a3a",
-            borderRadius: "4px",
-            backgroundColor: "#2a2a2a",
-            color: "#d1d5db",
-            cursor: "pointer",
-            fontSize: "16px",
-            fontWeight: "600",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#3a3a3a";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#2a2a2a";
-          }}
-        >
-          ←
-        </button>
-        <div
-          style={{
-            padding: "8px 16px",
-            border: "1px solid #3a3a3a",
-            borderRadius: "4px",
-            backgroundColor: "#1a1a1a",
-            color: "#d1d5db",
-            fontSize: "14px",
-            fontWeight: "500",
-            minWidth: "140px",
-            textAlign: "center",
-          }}
-        >
-          {formatDate(selectedDate)}
-        </div>
-        <button
-          onClick={() => changeDate(1)}
-          style={{
-            padding: "8px 12px",
-            border: "1px solid #3a3a3a",
-            borderRadius: "4px",
-            backgroundColor: "#2a2a2a",
-            color: "#d1d5db",
-            cursor: "pointer",
-            fontSize: "16px",
-            fontWeight: "600",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#3a3a3a";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#2a2a2a";
-          }}
-        >
-          →
-        </button>
-      </div>
-
-      {/* Timeframe Selector */}
-      <div
-        style={{
-          marginBottom: "16px",
-          display: "flex",
-          gap: "8px",
-          flexWrap: "wrap",
-        }}
-      >
-        {timeframes.map((tf) => (
+        {/* Date Selector */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <button
-            key={tf}
-            onClick={() => setTimeframe(tf)}
+            onClick={() => changeDate(-1)}
             style={{
-              padding: "8px 16px",
-              border: "1px solid #3a3a3a",
+              padding: "6px 10px",
+              border: "none",
               borderRadius: "4px",
-              backgroundColor: timeframe === tf ? "#26a69a" : "#2a2a2a",
-              color: timeframe === tf ? "#ffffff" : "#d1d5db",
+              backgroundColor: "#18181b",
+              color: "#d1d5db",
               cursor: "pointer",
-              fontWeight: timeframe === tf ? "600" : "400",
-              transition: "all 0.2s",
+              fontSize: "18px",
+              fontWeight: "600",
             }}
           >
-            {tf.toUpperCase()}
+            ←
           </button>
-        ))}
-      </div>
+          <div
+            style={{
+              padding: "6px 12px",
+              borderRadius: "4px",
+              backgroundColor: "#18181b",
+              color: "#d1d5db",
+              fontSize: "13px",
+              fontWeight: "500",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {formatDate(selectedDate)}
+          </div>
+          <button
+            onClick={() => changeDate(1)}
+            style={{
+              padding: "6px 10px",
+              border: "none",
+              borderRadius: "4px",
+              backgroundColor: "#18181b",
+              color: "#d1d5db",
+              cursor: "pointer",
+              fontSize: "18px",
+              fontWeight: "600",
+            }}
+          >
+            →
+          </button>
+        </div>
 
-      {/* Chart Container or Empty State */}
-      {moodLogs.length === 0 ? (
+        {/* Timeframe Selector - Compact */}
         <div
           style={{
-            width: "100%",
-            height: "400px",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "1px solid #3a3a3a",
-            borderRadius: "4px",
-            backgroundColor: "#1a1a1a",
+            gap: "4px",
+            overflowX: "auto",
+            scrollbarWidth: "none",
           }}
         >
-          <div style={{ textAlign: "center", color: "#9ca3af" }}>
-            <div
+          {timeframes.map((tf) => (
+            <button
+              key={tf}
+              onClick={() => setTimeframe(tf)}
               style={{
-                fontSize: "18px",
-                fontWeight: "500",
-                marginBottom: "8px",
+                padding: "6px 10px",
+                border: "none",
+                borderRadius: "4px",
+                backgroundColor: timeframe === tf ? "#26a69a" : "#18181b",
+                color: "#ffffff",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "12px",
+                whiteSpace: "nowrap",
               }}
             >
-              No Data Available
-            </div>
-            <div style={{ fontSize: "14px" }}>
-              No mood logs found for {formatDate(selectedDate)}
-            </div>
-          </div>
+              {tf.toUpperCase()}
+            </button>
+          ))}
         </div>
-      ) : (
-        <div
-          ref={chartContainerRef}
-          style={{ width: "100%", height: "400px" }}
-        />
-      )}
+      </div>
 
-      {/* Buy/Sell Buttons */}
+      {/* Chart Container - Takes Most Space */}
       <div
         style={{
-          marginTop: "16px",
+          flex: 1,
+          width: "100%",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {moodLogs.length === 0 ? (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#09090b",
+            }}
+          >
+            <div style={{ textAlign: "center", color: "#71717a" }}>
+              <div style={{ fontSize: "16px", fontWeight: "500" }}>
+                No data for {formatDate(selectedDate)}
+              </div>
+              <div style={{ fontSize: "13px", marginTop: "4px" }}>
+                Tap Buy or Sell to start trading
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div ref={chartContainerRef} style={{ width: "100%", height: "100%" }} />
+        )}
+      </div>
+
+      {/* Buy/Sell Buttons - Wide at Bottom */}
+      <div
+        style={{
+          padding: "16px",
           display: "flex",
           gap: "12px",
-          justifyContent: "center",
+          borderTop: "1px solid #27272a",
+          flexShrink: 0,
         }}
       >
         <button
           onClick={() => handleAddLog(-2.5)}
           style={{
             flex: 1,
-            maxWidth: "200px",
-            padding: "16px 24px",
+            padding: "18px",
             backgroundColor: "#ef5350",
             color: "#ffffff",
             border: "none",
-            borderRadius: "4px",
+            borderRadius: "8px",
             cursor: "pointer",
             fontWeight: "700",
-            fontSize: "16px",
-            transition: "all 0.2s",
+            fontSize: "18px",
             textTransform: "uppercase",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#f44336";
-            e.currentTarget.style.transform = "translateY(-2px)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#ef5350";
-            e.currentTarget.style.transform = "translateY(0)";
+            letterSpacing: "0.5px",
           }}
         >
           Sell
@@ -377,25 +367,16 @@ export default function CandlestickChart() {
           onClick={() => handleAddLog(2.5)}
           style={{
             flex: 1,
-            maxWidth: "200px",
-            padding: "16px 24px",
+            padding: "18px",
             backgroundColor: "#26a69a",
             color: "#ffffff",
             border: "none",
-            borderRadius: "4px",
+            borderRadius: "8px",
             cursor: "pointer",
             fontWeight: "700",
-            fontSize: "16px",
-            transition: "all 0.2s",
+            fontSize: "18px",
             textTransform: "uppercase",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#2bbbad";
-            e.currentTarget.style.transform = "translateY(-2px)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#26a69a";
-            e.currentTarget.style.transform = "translateY(0)";
+            letterSpacing: "0.5px",
           }}
         >
           Buy
