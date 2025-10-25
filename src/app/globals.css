@@ -26,8 +26,11 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  height: 100vh;
+  height: 100dvh; /* dvh accounts for dynamic viewport on mobile browsers */
   width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 html {

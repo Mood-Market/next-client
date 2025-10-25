@@ -205,7 +205,7 @@ export default function CandlestickChart() {
     <div
       style={{
         width: "100%",
-        height: "100vh",
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         backgroundColor: "#09090b",
@@ -331,7 +331,10 @@ export default function CandlestickChart() {
             </div>
           </div>
         ) : (
-          <div ref={chartContainerRef} style={{ width: "100%", height: "100%" }} />
+          <div
+            ref={chartContainerRef}
+            style={{ width: "100%", height: "100%" }}
+          />
         )}
       </div>
 
