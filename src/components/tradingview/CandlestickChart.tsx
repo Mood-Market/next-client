@@ -7,125 +7,126 @@ import {
   CandlestickSeries,
   UTCTimestamp,
 } from "lightweight-charts";
-import { fetchCandleData, CandleData } from "@/utils/api";
+import { fetchMoodLogs, MoodLog } from "@/utils/api";
 
 type Timeframe = "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1w";
 
-// Function to aggregate candles based on timeframe
-const getAggregatedData = (candleData: CandleData[], timeframe: Timeframe) => {
-  if (timeframe === "1h") {
-    return candleData;
+interface ConvertedCandle {
+  time: UTCTimestamp;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
+// Helper function to get interval size in seconds based on timeframe
+const getIntervalSeconds = (timeframe: Timeframe): number => {
+  const intervals: { [key in Timeframe]: number } = {
+    "1m": 60,
+    "5m": 5 * 60,
+    "15m": 15 * 60,
+    "1h": 60 * 60,
+    "4h": 4 * 60 * 60,
+    "1d": 24 * 60 * 60,
+    "1w": 7 * 24 * 60 * 60,
+  };
+  return intervals[timeframe];
+};
+
+// Helper function to round down timestamp to interval
+const roundDownToInterval = (
+  timestamp: number,
+  intervalSeconds: number
+): number => {
+  return Math.floor(timestamp / intervalSeconds) * intervalSeconds;
+};
+
+// Function to convert mood logs to candle data grouped by timeframe
+// Each mood impact affects the price, creating OHLC data for each interval
+const convertLogsToCandles = (
+  logs: MoodLog[],
+  timeframe: Timeframe
+): ConvertedCandle[] => {
+  if (logs.length === 0) return [];
+
+  const intervalSeconds = getIntervalSeconds(timeframe);
+
+  // Group logs by interval
+  const logsByInterval = new Map<number, MoodLog[]>();
+
+  for (const log of logs) {
+    // Round down to the nearest interval
+    const intervalKey = roundDownToInterval(log.time, intervalSeconds);
+
+    if (!logsByInterval.has(intervalKey)) {
+      logsByInterval.set(intervalKey, []);
+    }
+    logsByInterval.get(intervalKey)!.push(log);
   }
 
-  // For smaller timeframes (1m, 5m, 15m), split each hourly candle into multiple candles
-  if (["1m", "5m", "15m"].includes(timeframe)) {
-    const candlesPerHour: { [key in Timeframe]?: number } = {
-      "1m": 60,
-      "5m": 12,
-      "15m": 4,
-    };
+  // Sort the intervals chronologically
+  const sortedIntervals = Array.from(logsByInterval.keys()).sort(
+    (a, b) => a - b
+  );
 
-    const count = candlesPerHour[timeframe] || 1;
-    const result = [];
+  const candlesticks: ConvertedCandle[] = [];
+  let currentPrice = 0; // Starting price baseline
 
-    for (const hourlyCandle of candleData) {
-      const priceRange = hourlyCandle.high - hourlyCandle.low;
-      let currentPrice = hourlyCandle.open;
+  for (const interval of sortedIntervals) {
+    const logsInInterval = logsByInterval.get(interval)!;
 
-      for (let i = 0; i < count; i++) {
-        let secondsOffset = 0;
+    // Sort logs within the interval by time
+    logsInInterval.sort((a, b) => a.time - b.time);
 
-        if (timeframe === "1m") {
-          secondsOffset = i * 60;
-        } else if (timeframe === "5m") {
-          secondsOffset = i * 5 * 60;
-        } else if (timeframe === "15m") {
-          secondsOffset = i * 15 * 60;
-        }
+    const open = currentPrice;
+    let high = currentPrice;
+    let low = currentPrice;
+    let close = currentPrice;
 
-        const targetPrice =
-          hourlyCandle.open +
-          ((hourlyCandle.close - hourlyCandle.open) * (i + 1)) / count;
-        const open = currentPrice;
-        const close = targetPrice;
-        const volatility = priceRange / count;
-        const high = Math.max(open, close) + volatility * 0.3;
-        const low = Math.min(open, close) - volatility * 0.3;
+    // Apply each impact in chronological order within the interval
+    for (const log of logsInInterval) {
+      // Convert impact to price change
+      const priceChange = log.impact * 0.5;
+      close += priceChange;
 
-        const timestamp = (hourlyCandle.time + secondsOffset) as UTCTimestamp;
-
-        result.push({
-          time: timestamp,
-          open: parseFloat(open.toFixed(2)),
-          high: parseFloat(high.toFixed(2)),
-          low: parseFloat(low.toFixed(2)),
-          close: parseFloat(close.toFixed(2)),
-        });
-
-        currentPrice = close;
-      }
+      // Update high and low
+      if (close > high) high = close;
+      if (close < low) low = close;
     }
 
-    return result;
+    // Ensure high >= max(open, close) and low <= min(open, close)
+    high = Math.max(high, open, close);
+    low = Math.min(low, open, close);
+
+    candlesticks.push({
+      time: interval as UTCTimestamp,
+      open: parseFloat(open.toFixed(2)),
+      high: parseFloat(high.toFixed(2)),
+      low: parseFloat(low.toFixed(2)),
+      close: parseFloat(close.toFixed(2)),
+    });
+
+    // Update current price for next interval
+    currentPrice = close;
   }
 
-  // For 4h timeframe, aggregate 4 hourly candles
-  if (timeframe === "4h") {
-    const result = [];
-    for (let i = 0; i < candleData.length; i += 4) {
-      const fourHourCandles = candleData.slice(i, i + 4);
-      if (fourHourCandles.length === 0) continue;
-
-      const open = fourHourCandles[0].open;
-      const close = fourHourCandles[fourHourCandles.length - 1].close;
-      const high = Math.max(...fourHourCandles.map((c) => c.high));
-      const low = Math.min(...fourHourCandles.map((c) => c.low));
-      const time = fourHourCandles[0].time;
-
-      result.push({ time, open, high, low, close });
-    }
-    return result;
-  }
-
-  // For 1d timeframe, aggregate all hourly candles into one daily candle
-  if (timeframe === "1d") {
-    const open = candleData[0].open;
-    const close = candleData[candleData.length - 1].close;
-    const high = Math.max(...candleData.map((c) => c.high));
-    const low = Math.min(...candleData.map((c) => c.low));
-    const time = candleData[0].time;
-
-    return [{ time, open, high, low, close }];
-  }
-
-  // For 1w timeframe, same as 1d since we only have one day of data
-  if (timeframe === "1w") {
-    const open = candleData[0].open;
-    const close = candleData[candleData.length - 1].close;
-    const high = Math.max(...candleData.map((c) => c.high));
-    const low = Math.min(...candleData.map((c) => c.low));
-    const time = candleData[0].time;
-
-    return [{ time, open, high, low, close }];
-  }
-
-  return candleData;
+  return candlesticks;
 };
 
 export default function CandlestickChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1d");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date(2024, 0, 1)); // Start with Jan 1, 2024
-  const [candleData, setCandleData] = useState<CandleData[]>([]);
+  const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
 
-  // Fetch candle data when date changes
+  // Fetch mood logs when date changes
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await fetchCandleData(selectedDate);
-        setCandleData(data);
+        const data = await fetchMoodLogs(selectedDate);
+        setMoodLogs(data);
       } catch (error) {
-        console.error("Error fetching candle data:", error);
+        console.error("Error fetching mood logs:", error);
       }
     };
 
@@ -157,7 +158,7 @@ export default function CandlestickChart() {
     chartContainerRef.current.innerHTML = "";
 
     // If no data, don't create chart
-    if (candleData.length === 0) return;
+    if (moodLogs.length === 0) return;
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
@@ -180,7 +181,8 @@ export default function CandlestickChart() {
       wickDownColor: "#ef5350",
     });
 
-    const data = getAggregatedData(candleData, timeframe);
+    // Convert mood logs to candle data with the selected timeframe
+    const data = convertLogsToCandles(moodLogs, timeframe);
     candlestickSeries.setData(data);
 
     // Fit content to chart
@@ -201,7 +203,7 @@ export default function CandlestickChart() {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [timeframe, candleData]);
+  }, [timeframe, moodLogs]);
 
   const timeframes: Timeframe[] = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"];
 
@@ -307,7 +309,7 @@ export default function CandlestickChart() {
       </div>
 
       {/* Chart Container or Empty State */}
-      {candleData.length === 0 ? (
+      {moodLogs.length === 0 ? (
         <div
           style={{
             width: "100%",
@@ -331,7 +333,7 @@ export default function CandlestickChart() {
               No Data Available
             </div>
             <div style={{ fontSize: "14px" }}>
-              No candle data found for {formatDate(selectedDate)}
+              No mood logs found for {formatDate(selectedDate)}
             </div>
           </div>
         </div>

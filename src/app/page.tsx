@@ -6,10 +6,10 @@ export default function Home() {
       <main className="flex w-full max-w-6xl flex-col gap-8">
         <div>
           <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50 mb-2">
-            TradingView Candlestick Chart
+            Mood Tracker
           </h1>
           <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Displaying 10 candles of mock data
+            Track how daily activities impact your mood level
           </p>
         </div>
         <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-6">
