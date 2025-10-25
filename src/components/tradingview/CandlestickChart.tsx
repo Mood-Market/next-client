@@ -7,123 +7,14 @@ import {
   CandlestickSeries,
   UTCTimestamp,
 } from "lightweight-charts";
+import { fetchCandleData, CandleData } from "@/utils/api";
 
 type Timeframe = "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1w";
 
-// Base candle data (hourly intervals within a single day)
-// Using Unix timestamps for intraday data
-const CANDLE_DATA = [
-  {
-    time: 1704067200 as UTCTimestamp,
-    open: 100,
-    high: 110,
-    low: 95,
-    close: 105,
-  }, // 2024-01-01 00:00
-  {
-    time: 1704070800 as UTCTimestamp,
-    open: 105,
-    high: 115,
-    low: 100,
-    close: 112,
-  }, // 2024-01-01 01:00
-  {
-    time: 1704074400 as UTCTimestamp,
-    open: 112,
-    high: 118,
-    low: 108,
-    close: 110,
-  }, // 2024-01-01 02:00
-  {
-    time: 1704078000 as UTCTimestamp,
-    open: 110,
-    high: 112,
-    low: 102,
-    close: 104,
-  }, // 2024-01-01 03:00
-  {
-    time: 1704081600 as UTCTimestamp,
-    open: 104,
-    high: 109,
-    low: 98,
-    close: 107,
-  }, // 2024-01-01 04:00
-  {
-    time: 1704085200 as UTCTimestamp,
-    open: 107,
-    high: 120,
-    low: 105,
-    close: 118,
-  }, // 2024-01-01 05:00
-  {
-    time: 1704088800 as UTCTimestamp,
-    open: 118,
-    high: 125,
-    low: 115,
-    close: 122,
-  }, // 2024-01-01 06:00
-  {
-    time: 1704092400 as UTCTimestamp,
-    open: 122,
-    high: 128,
-    low: 119,
-    close: 120,
-  }, // 2024-01-01 07:00
-  {
-    time: 1704096000 as UTCTimestamp,
-    open: 120,
-    high: 124,
-    low: 112,
-    close: 115,
-  }, // 2024-01-01 08:00
-  {
-    time: 1704099600 as UTCTimestamp,
-    open: 115,
-    high: 121,
-    low: 113,
-    close: 119,
-  }, // 2024-01-01 09:00
-  {
-    time: 1704103200 as UTCTimestamp,
-    open: 119,
-    high: 126,
-    low: 117,
-    close: 124,
-  }, // 2024-01-01 10:00
-  {
-    time: 1704106800 as UTCTimestamp,
-    open: 124,
-    high: 130,
-    low: 122,
-    close: 128,
-  }, // 2024-01-01 11:00
-  {
-    time: 1704110400 as UTCTimestamp,
-    open: 128,
-    high: 132,
-    low: 125,
-    close: 126,
-  }, // 2024-01-01 12:00
-  {
-    time: 1704114000 as UTCTimestamp,
-    open: 126,
-    high: 129,
-    low: 120,
-    close: 122,
-  }, // 2024-01-01 13:00
-  {
-    time: 1704117600 as UTCTimestamp,
-    open: 122,
-    high: 127,
-    low: 118,
-    close: 125,
-  }, // 2024-01-01 14:00
-];
-
 // Function to aggregate candles based on timeframe
-const getAggregatedData = (timeframe: Timeframe) => {
+const getAggregatedData = (candleData: CandleData[], timeframe: Timeframe) => {
   if (timeframe === "1h") {
-    return CANDLE_DATA;
+    return candleData;
   }
 
   // For smaller timeframes (1m, 5m, 15m), split each hourly candle into multiple candles
@@ -137,7 +28,7 @@ const getAggregatedData = (timeframe: Timeframe) => {
     const count = candlesPerHour[timeframe] || 1;
     const result = [];
 
-    for (const hourlyCandle of CANDLE_DATA) {
+    for (const hourlyCandle of candleData) {
       const priceRange = hourlyCandle.high - hourlyCandle.low;
       let currentPrice = hourlyCandle.open;
 
@@ -181,8 +72,8 @@ const getAggregatedData = (timeframe: Timeframe) => {
   // For 4h timeframe, aggregate 4 hourly candles
   if (timeframe === "4h") {
     const result = [];
-    for (let i = 0; i < CANDLE_DATA.length; i += 4) {
-      const fourHourCandles = CANDLE_DATA.slice(i, i + 4);
+    for (let i = 0; i < candleData.length; i += 4) {
+      const fourHourCandles = candleData.slice(i, i + 4);
       if (fourHourCandles.length === 0) continue;
 
       const open = fourHourCandles[0].open;
@@ -198,46 +89,86 @@ const getAggregatedData = (timeframe: Timeframe) => {
 
   // For 1d timeframe, aggregate all hourly candles into one daily candle
   if (timeframe === "1d") {
-    const open = CANDLE_DATA[0].open;
-    const close = CANDLE_DATA[CANDLE_DATA.length - 1].close;
-    const high = Math.max(...CANDLE_DATA.map((c) => c.high));
-    const low = Math.min(...CANDLE_DATA.map((c) => c.low));
-    const time = CANDLE_DATA[0].time;
+    const open = candleData[0].open;
+    const close = candleData[candleData.length - 1].close;
+    const high = Math.max(...candleData.map((c) => c.high));
+    const low = Math.min(...candleData.map((c) => c.low));
+    const time = candleData[0].time;
 
     return [{ time, open, high, low, close }];
   }
 
   // For 1w timeframe, same as 1d since we only have one day of data
   if (timeframe === "1w") {
-    const open = CANDLE_DATA[0].open;
-    const close = CANDLE_DATA[CANDLE_DATA.length - 1].close;
-    const high = Math.max(...CANDLE_DATA.map((c) => c.high));
-    const low = Math.min(...CANDLE_DATA.map((c) => c.low));
-    const time = CANDLE_DATA[0].time;
+    const open = candleData[0].open;
+    const close = candleData[candleData.length - 1].close;
+    const high = Math.max(...candleData.map((c) => c.high));
+    const low = Math.min(...candleData.map((c) => c.low));
+    const time = candleData[0].time;
 
     return [{ time, open, high, low, close }];
   }
 
-  return CANDLE_DATA;
+  return candleData;
 };
 
 export default function CandlestickChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1d");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2024, 0, 1)); // Start with Jan 1, 2024
+  const [candleData, setCandleData] = useState<CandleData[]>([]);
+
+  // Fetch candle data when date changes
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = await fetchCandleData(selectedDate);
+        setCandleData(data);
+      } catch (error) {
+        console.error("Error fetching candle data:", error);
+      }
+    };
+
+    loadData();
+  }, [selectedDate]);
+
+  // Handle date change
+  const changeDate = (days: number) => {
+    setSelectedDate((prevDate) => {
+      const newDate = new Date(prevDate);
+      newDate.setDate(newDate.getDate() + days);
+      return newDate;
+    });
+  };
+
+  // Format date for display
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
+
+    // Clear previous chart if exists
+    chartContainerRef.current.innerHTML = "";
+
+    // If no data, don't create chart
+    if (candleData.length === 0) return;
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: 400,
       layout: {
-        background: { type: ColorType.Solid, color: "#ffffff" },
-        textColor: "#333",
+        background: { type: ColorType.Solid, color: "#1a1a1a" },
+        textColor: "#d1d5db",
       },
       grid: {
-        vertLines: { color: "#e1e1e1" },
-        horzLines: { color: "#e1e1e1" },
+        vertLines: { color: "#2a2a2a" },
+        horzLines: { color: "#2a2a2a" },
       },
     });
 
@@ -249,7 +180,7 @@ export default function CandlestickChart() {
       wickDownColor: "#ef5350",
     });
 
-    const data = getAggregatedData(timeframe);
+    const data = getAggregatedData(candleData, timeframe);
     candlestickSeries.setData(data);
 
     // Fit content to chart
@@ -270,12 +201,83 @@ export default function CandlestickChart() {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [timeframe]);
+  }, [timeframe, candleData]);
 
   const timeframes: Timeframe[] = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"];
 
   return (
     <div style={{ width: "100%" }}>
+      {/* Date Selector */}
+      <div
+        style={{
+          marginBottom: "16px",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+        }}
+      >
+        <button
+          onClick={() => changeDate(-1)}
+          style={{
+            padding: "8px 12px",
+            border: "1px solid #3a3a3a",
+            borderRadius: "4px",
+            backgroundColor: "#2a2a2a",
+            color: "#d1d5db",
+            cursor: "pointer",
+            fontSize: "16px",
+            fontWeight: "600",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#3a3a3a";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#2a2a2a";
+          }}
+        >
+          ←
+        </button>
+        <div
+          style={{
+            padding: "8px 16px",
+            border: "1px solid #3a3a3a",
+            borderRadius: "4px",
+            backgroundColor: "#1a1a1a",
+            color: "#d1d5db",
+            fontSize: "14px",
+            fontWeight: "500",
+            minWidth: "140px",
+            textAlign: "center",
+          }}
+        >
+          {formatDate(selectedDate)}
+        </div>
+        <button
+          onClick={() => changeDate(1)}
+          style={{
+            padding: "8px 12px",
+            border: "1px solid #3a3a3a",
+            borderRadius: "4px",
+            backgroundColor: "#2a2a2a",
+            color: "#d1d5db",
+            cursor: "pointer",
+            fontSize: "16px",
+            fontWeight: "600",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#3a3a3a";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#2a2a2a";
+          }}
+        >
+          →
+        </button>
+      </div>
+
+      {/* Timeframe Selector */}
       <div
         style={{
           marginBottom: "16px",
@@ -290,10 +292,10 @@ export default function CandlestickChart() {
             onClick={() => setTimeframe(tf)}
             style={{
               padding: "8px 16px",
-              border: "1px solid #e1e1e1",
+              border: "1px solid #3a3a3a",
               borderRadius: "4px",
-              backgroundColor: timeframe === tf ? "#26a69a" : "#ffffff",
-              color: timeframe === tf ? "#ffffff" : "#333",
+              backgroundColor: timeframe === tf ? "#26a69a" : "#2a2a2a",
+              color: timeframe === tf ? "#ffffff" : "#d1d5db",
               cursor: "pointer",
               fontWeight: timeframe === tf ? "600" : "400",
               transition: "all 0.2s",
@@ -303,7 +305,42 @@ export default function CandlestickChart() {
           </button>
         ))}
       </div>
-      <div ref={chartContainerRef} style={{ width: "100%", height: "400px" }} />
+
+      {/* Chart Container or Empty State */}
+      {candleData.length === 0 ? (
+        <div
+          style={{
+            width: "100%",
+            height: "400px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1px solid #3a3a3a",
+            borderRadius: "4px",
+            backgroundColor: "#1a1a1a",
+          }}
+        >
+          <div style={{ textAlign: "center", color: "#9ca3af" }}>
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: "500",
+                marginBottom: "8px",
+              }}
+            >
+              No Data Available
+            </div>
+            <div style={{ fontSize: "14px" }}>
+              No candle data found for {formatDate(selectedDate)}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          ref={chartContainerRef}
+          style={{ width: "100%", height: "400px" }}
+        />
+      )}
     </div>
   );
 }
