@@ -24,9 +24,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ height: "100%", overflow: "hidden" }}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ height: "100%", margin: 0, overflow: "hidden" }}
       >
         <MoodLogProvider>{children}</MoodLogProvider>
       </body>
