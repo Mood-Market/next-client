@@ -7,7 +7,8 @@ import {
   CandlestickSeries,
   UTCTimestamp,
 } from "lightweight-charts";
-import { fetchMoodLogs, MoodLog } from "@/utils/api";
+import { MoodLog } from "@/utils/api";
+import { useMoodLogs } from "@/context/MoodLogContext";
 
 type Timeframe = "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1w";
 
@@ -116,22 +117,14 @@ const convertLogsToCandles = (
 export default function CandlestickChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1d");
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2024, 0, 1)); // Start with Jan 1, 2024
-  const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Start with today
+  const { getLogsByDate, addLog } = useMoodLogs();
+  const moodLogs = getLogsByDate(selectedDate);
 
-  // Fetch mood logs when date changes
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await fetchMoodLogs(selectedDate);
-        setMoodLogs(data);
-      } catch (error) {
-        console.error("Error fetching mood logs:", error);
-      }
-    };
-
-    loadData();
-  }, [selectedDate]);
+  // Handle adding a log with positive or negative impact
+  const handleAddLog = (impact: number) => {
+    addLog({ activity: "", impact });
+  };
 
   // Handle date change
   const changeDate = (days: number) => {
@@ -203,7 +196,7 @@ export default function CandlestickChart() {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [timeframe, moodLogs]);
+  }, [timeframe, selectedDate, moodLogs]);
 
   const timeframes: Timeframe[] = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"];
 
@@ -343,6 +336,71 @@ export default function CandlestickChart() {
           style={{ width: "100%", height: "400px" }}
         />
       )}
+
+      {/* Buy/Sell Buttons */}
+      <div
+        style={{
+          marginTop: "16px",
+          display: "flex",
+          gap: "12px",
+          justifyContent: "center",
+        }}
+      >
+        <button
+          onClick={() => handleAddLog(-2.5)}
+          style={{
+            flex: 1,
+            maxWidth: "200px",
+            padding: "16px 24px",
+            backgroundColor: "#ef5350",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontWeight: "700",
+            fontSize: "16px",
+            transition: "all 0.2s",
+            textTransform: "uppercase",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#f44336";
+            e.currentTarget.style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#ef5350";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          Sell
+        </button>
+        <button
+          onClick={() => handleAddLog(2.5)}
+          style={{
+            flex: 1,
+            maxWidth: "200px",
+            padding: "16px 24px",
+            backgroundColor: "#26a69a",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontWeight: "700",
+            fontSize: "16px",
+            transition: "all 0.2s",
+            textTransform: "uppercase",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#2bbbad";
+            e.currentTarget.style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#26a69a";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          Buy
+        </button>
+      </div>
     </div>
   );
 }
