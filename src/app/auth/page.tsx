@@ -13,7 +13,14 @@ export default function AuthPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
 
-  const { signIn, signUp, verifyCode, isLoading, pendingEmail } = useAuth();
+  const {
+    signIn,
+    signUp,
+    verifyCode,
+    isLoading,
+    pendingEmail,
+    setPendingEmail,
+  } = useAuth();
 
   // Auto-switch to verification view when pendingEmail is set
   if (pendingEmail && currentView !== "verify") {
@@ -67,6 +74,10 @@ export default function AuthPage() {
   const switchView = (view: AuthView) => {
     setCurrentView(view);
     resetForm();
+    // Clear pending email when switching away from verify view
+    if (view !== "verify") {
+      setPendingEmail(null);
+    }
   };
 
   return (
@@ -78,6 +89,10 @@ export default function AuthPage() {
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "#09090b",
+        backgroundImage: "url(/background.png)",
+        backgroundSize: "cover",
+        backgroundPosition: "bottom",
+        backgroundRepeat: "no-repeat",
         padding: "16px",
       }}
     >
@@ -85,10 +100,12 @@ export default function AuthPage() {
         style={{
           width: "100%",
           maxWidth: "400px",
-          backgroundColor: "#18181b",
+          backgroundColor: "rgba(24, 24, 27, 0.95)",
+          backdropFilter: "blur(10px)",
           borderRadius: "12px",
           padding: "32px",
-          border: "1px solid #27272a",
+          border: "1px solid rgba(39, 39, 42, 0.8)",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
         }}
       >
         {/* Header */}

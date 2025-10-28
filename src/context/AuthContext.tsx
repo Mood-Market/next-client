@@ -23,7 +23,7 @@ interface AuthContextType {
   verifyCode: (email: string, code: string) => Promise<void>;
   signOut: () => void;
   pendingEmail: string | null;
-  setPendingEmail: (email: string) => void;
+  setPendingEmail: (email: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
