@@ -118,8 +118,11 @@ export default function CandlestickChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1d");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Start with today
-  const { getLogsByDate, addLog } = useMoodLogs();
-  const moodLogs = getLogsByDate(selectedDate);
+  const [isAllTimeView, setIsAllTimeView] = useState(false);
+  const { getLogsByDate, addLog, logs } = useMoodLogs();
+  
+  // Get mood logs based on view mode
+  const moodLogs = isAllTimeView ? logs : getLogsByDate(selectedDate);
 
   // Handle adding a log with positive or negative impact
   const handleAddLog = (impact: number) => {
@@ -197,7 +200,7 @@ export default function CandlestickChart() {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [timeframe, selectedDate, moodLogs]);
+  }, [timeframe, selectedDate, moodLogs, isAllTimeView]);
 
   const timeframes: Timeframe[] = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"];
 
@@ -270,6 +273,24 @@ export default function CandlestickChart() {
           </button>
         </div>
 
+        {/* All Time Toggle */}
+        <button
+          onClick={() => setIsAllTimeView(!isAllTimeView)}
+          style={{
+            padding: "6px 12px",
+            border: "none",
+            borderRadius: "4px",
+            backgroundColor: isAllTimeView ? "#26a69a" : "#18181b",
+            color: "#ffffff",
+            cursor: "pointer",
+            fontSize: "12px",
+            fontWeight: "600",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {isAllTimeView ? "All Time" : "Daily"}
+        </button>
+
         {/* Timeframe Selector - Compact */}
         <div
           style={{
@@ -323,7 +344,9 @@ export default function CandlestickChart() {
           >
             <div style={{ textAlign: "center", color: "#71717a" }}>
               <div style={{ fontSize: "16px", fontWeight: "500" }}>
-                No data for {formatDate(selectedDate)}
+                {isAllTimeView 
+                  ? "No data available" 
+                  : `No data for ${formatDate(selectedDate)}`}
               </div>
               <div style={{ fontSize: "13px", marginTop: "4px" }}>
                 Tap Buy or Sell to start trading
