@@ -117,7 +117,7 @@ const convertLogsToCandles = (
 
 export default function CandlestickChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const [timeframe, setTimeframe] = useState<Timeframe>("1d");
+  const [timeframe, setTimeframe] = useState<Timeframe>("5m");
   const { addLog, logs } = useMoodLogs();
   const { signOut, user } = useAuth();
 
