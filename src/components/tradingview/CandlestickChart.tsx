@@ -120,7 +120,7 @@ export default function CandlestickChart() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Start with today
   const [isAllTimeView, setIsAllTimeView] = useState(false);
   const { getLogsByDate, addLog, logs } = useMoodLogs();
-  
+
   // Get mood logs based on view mode
   const moodLogs = isAllTimeView ? logs : getLogsByDate(selectedDate);
 
@@ -226,52 +226,54 @@ export default function CandlestickChart() {
           flexShrink: 0,
         }}
       >
-        {/* Date Selector */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <button
-            onClick={() => changeDate(-1)}
-            style={{
-              padding: "6px 10px",
-              border: "none",
-              borderRadius: "4px",
-              backgroundColor: "#18181b",
-              color: "#d1d5db",
-              cursor: "pointer",
-              fontSize: "18px",
-              fontWeight: "600",
-            }}
-          >
-            ←
-          </button>
-          <div
-            style={{
-              padding: "6px 12px",
-              borderRadius: "4px",
-              backgroundColor: "#18181b",
-              color: "#d1d5db",
-              fontSize: "13px",
-              fontWeight: "500",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {formatDate(selectedDate)}
+        {/* Date Selector - Hidden when in All Time view */}
+        {!isAllTimeView && (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              onClick={() => changeDate(-1)}
+              style={{
+                padding: "6px 10px",
+                border: "none",
+                borderRadius: "4px",
+                backgroundColor: "#18181b",
+                color: "#d1d5db",
+                cursor: "pointer",
+                fontSize: "18px",
+                fontWeight: "600",
+              }}
+            >
+              ←
+            </button>
+            <div
+              style={{
+                padding: "6px 12px",
+                borderRadius: "4px",
+                backgroundColor: "#18181b",
+                color: "#d1d5db",
+                fontSize: "13px",
+                fontWeight: "500",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {formatDate(selectedDate)}
+            </div>
+            <button
+              onClick={() => changeDate(1)}
+              style={{
+                padding: "6px 10px",
+                border: "none",
+                borderRadius: "4px",
+                backgroundColor: "#18181b",
+                color: "#d1d5db",
+                cursor: "pointer",
+                fontSize: "18px",
+                fontWeight: "600",
+              }}
+            >
+              →
+            </button>
           </div>
-          <button
-            onClick={() => changeDate(1)}
-            style={{
-              padding: "6px 10px",
-              border: "none",
-              borderRadius: "4px",
-              backgroundColor: "#18181b",
-              color: "#d1d5db",
-              cursor: "pointer",
-              fontSize: "18px",
-              fontWeight: "600",
-            }}
-          >
-            →
-          </button>
-        </div>
+        )}
 
         {/* All Time Toggle */}
         <button
@@ -344,8 +346,8 @@ export default function CandlestickChart() {
           >
             <div style={{ textAlign: "center", color: "#71717a" }}>
               <div style={{ fontSize: "16px", fontWeight: "500" }}>
-                {isAllTimeView 
-                  ? "No data available" 
+                {isAllTimeView
+                  ? "No data available"
                   : `No data for ${formatDate(selectedDate)}`}
               </div>
               <div style={{ fontSize: "13px", marginTop: "4px" }}>
