@@ -9,6 +9,7 @@ import {
 } from "lightweight-charts";
 import { MoodLog } from "@/utils/api";
 import { useMoodLogs } from "@/context/MoodLogContext";
+import { useAuth } from "@/context/AuthContext";
 
 type Timeframe = "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1w";
 
@@ -120,6 +121,7 @@ export default function CandlestickChart() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Start with today
   const [isAllTimeView, setIsAllTimeView] = useState(false);
   const { getLogsByDate, addLog, logs } = useMoodLogs();
+  const { signOut, user } = useAuth();
 
   // Get mood logs based on view mode
   const moodLogs = isAllTimeView ? logs : getLogsByDate(selectedDate);
@@ -217,110 +219,146 @@ export default function CandlestickChart() {
       {/* Compact Header */}
       <div
         style={{
-          padding: "12px 16px",
+          padding: "8px 16px",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
+          flexDirection: "column",
+          gap: "8px",
           borderBottom: "1px solid #27272a",
           flexShrink: 0,
         }}
       >
-        {/* Date Selector - Hidden when in All Time view */}
-        {!isAllTimeView && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <button
-              onClick={() => changeDate(-1)}
-              style={{
-                padding: "6px 10px",
-                border: "none",
-                borderRadius: "4px",
-                backgroundColor: "#18181b",
-                color: "#d1d5db",
-                cursor: "pointer",
-                fontSize: "18px",
-                fontWeight: "600",
-              }}
-            >
-              ←
-            </button>
-            <div
-              style={{
-                padding: "6px 12px",
-                borderRadius: "4px",
-                backgroundColor: "#18181b",
-                color: "#d1d5db",
-                fontSize: "13px",
-                fontWeight: "500",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {formatDate(selectedDate)}
-            </div>
-            <button
-              onClick={() => changeDate(1)}
-              style={{
-                padding: "6px 10px",
-                border: "none",
-                borderRadius: "4px",
-                backgroundColor: "#18181b",
-                color: "#d1d5db",
-                cursor: "pointer",
-                fontSize: "18px",
-                fontWeight: "600",
-              }}
-            >
-              →
-            </button>
-          </div>
-        )}
-
-        {/* All Time Toggle */}
-        <button
-          onClick={() => setIsAllTimeView(!isAllTimeView)}
-          style={{
-            padding: "6px 12px",
-            border: "none",
-            borderRadius: "4px",
-            backgroundColor: isAllTimeView ? "#26a69a" : "#18181b",
-            color: "#ffffff",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: "600",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {isAllTimeView ? "All Time" : "Daily"}
-        </button>
-
-        {/* Timeframe Selector - Compact */}
+        {/* Top row: User info and sign out */}
         <div
           style={{
             display: "flex",
-            gap: "4px",
-            overflowX: "auto",
-            scrollbarWidth: "none",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          {timeframes.map((tf) => (
-            <button
-              key={tf}
-              onClick={() => setTimeframe(tf)}
-              style={{
-                padding: "6px 10px",
-                border: "none",
-                borderRadius: "4px",
-                backgroundColor: timeframe === tf ? "#26a69a" : "#18181b",
-                color: "#ffffff",
-                cursor: "pointer",
-                fontWeight: "600",
-                fontSize: "12px",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {tf.toUpperCase()}
-            </button>
-          ))}
+          <div style={{ fontSize: "12px", color: "#71717a" }}>
+            Welcome, {user?.name || user?.email}
+          </div>
+          <button
+            onClick={signOut}
+            style={{
+              padding: "4px 8px",
+              border: "none",
+              borderRadius: "4px",
+              backgroundColor: "#374151",
+              color: "#d1d5db",
+              cursor: "pointer",
+              fontSize: "11px",
+            }}
+          >
+            Sign Out
+          </button>
+        </div>
+
+        {/* Bottom row: Controls */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+          }}
+        >
+          {/* Date Selector - Hidden when in All Time view */}
+          {!isAllTimeView && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button
+                onClick={() => changeDate(-1)}
+                style={{
+                  padding: "6px 10px",
+                  border: "none",
+                  borderRadius: "4px",
+                  backgroundColor: "#18181b",
+                  color: "#d1d5db",
+                  cursor: "pointer",
+                  fontSize: "18px",
+                  fontWeight: "600",
+                }}
+              >
+                ←
+              </button>
+              <div
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  backgroundColor: "#18181b",
+                  color: "#d1d5db",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {formatDate(selectedDate)}
+              </div>
+              <button
+                onClick={() => changeDate(1)}
+                style={{
+                  padding: "6px 10px",
+                  border: "none",
+                  borderRadius: "4px",
+                  backgroundColor: "#18181b",
+                  color: "#d1d5db",
+                  cursor: "pointer",
+                  fontSize: "18px",
+                  fontWeight: "600",
+                }}
+              >
+                →
+              </button>
+            </div>
+          )}
+
+          {/* All Time Toggle */}
+          <button
+            onClick={() => setIsAllTimeView(!isAllTimeView)}
+            style={{
+              padding: "6px 12px",
+              border: "none",
+              borderRadius: "4px",
+              backgroundColor: isAllTimeView ? "#26a69a" : "#18181b",
+              color: "#ffffff",
+              cursor: "pointer",
+              fontSize: "12px",
+              fontWeight: "600",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isAllTimeView ? "All Time" : "Daily"}
+          </button>
+
+          {/* Timeframe Selector - Compact */}
+          <div
+            style={{
+              display: "flex",
+              gap: "4px",
+              overflowX: "auto",
+              scrollbarWidth: "none",
+            }}
+          >
+            {timeframes.map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setTimeframe(tf)}
+                style={{
+                  padding: "6px 10px",
+                  border: "none",
+                  borderRadius: "4px",
+                  backgroundColor: timeframe === tf ? "#26a69a" : "#18181b",
+                  color: "#ffffff",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  fontSize: "12px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {tf.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
