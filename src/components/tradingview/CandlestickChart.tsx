@@ -118,35 +118,15 @@ const convertLogsToCandles = (
 export default function CandlestickChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("1d");
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Start with today
-  const [isAllTimeView, setIsAllTimeView] = useState(false);
-  const { getLogsByDate, addLog, logs } = useMoodLogs();
+  const { addLog, logs } = useMoodLogs();
   const { signOut, user } = useAuth();
 
-  // Get mood logs based on view mode
-  const moodLogs = isAllTimeView ? logs : getLogsByDate(selectedDate);
+  // Always use all logs
+  const moodLogs = logs;
 
   // Handle adding a log with positive or negative impact
   const handleAddLog = (impact: number) => {
     addLog({ activity: "", impact });
-  };
-
-  // Handle date change
-  const changeDate = (days: number) => {
-    setSelectedDate((prevDate) => {
-      const newDate = new Date(prevDate);
-      newDate.setDate(newDate.getDate() + days);
-      return newDate;
-    });
-  };
-
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
   };
 
   useEffect(() => {
@@ -202,7 +182,7 @@ export default function CandlestickChart() {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [timeframe, selectedDate, moodLogs, isAllTimeView]);
+  }, [timeframe, moodLogs]);
 
   const timeframes: Timeframe[] = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"];
 
@@ -263,72 +243,36 @@ export default function CandlestickChart() {
             gap: "12px",
           }}
         >
-          {/* Date Selector - Hidden when in All Time view */}
-          {!isAllTimeView && (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <button
-                onClick={() => changeDate(-1)}
-                style={{
-                  padding: "6px 10px",
-                  border: "none",
-                  borderRadius: "4px",
-                  backgroundColor: "#18181b",
-                  color: "#d1d5db",
-                  cursor: "pointer",
-                  fontSize: "18px",
-                  fontWeight: "600",
-                }}
-              >
-                ←
-              </button>
-              <div
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "4px",
-                  backgroundColor: "#18181b",
-                  color: "#d1d5db",
-                  fontSize: "13px",
-                  fontWeight: "500",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {formatDate(selectedDate)}
-              </div>
-              <button
-                onClick={() => changeDate(1)}
-                style={{
-                  padding: "6px 10px",
-                  border: "none",
-                  borderRadius: "4px",
-                  backgroundColor: "#18181b",
-                  color: "#d1d5db",
-                  cursor: "pointer",
-                  fontSize: "18px",
-                  fontWeight: "600",
-                }}
-              >
-                →
-              </button>
-            </div>
-          )}
-
-          {/* All Time Toggle */}
-          <button
-            onClick={() => setIsAllTimeView(!isAllTimeView)}
+          {/* All Time View Header */}
+          <div
             style={{
-              padding: "6px 12px",
-              border: "none",
-              borderRadius: "4px",
-              backgroundColor: isAllTimeView ? "#26a69a" : "#18181b",
-              color: "#ffffff",
-              cursor: "pointer",
-              fontSize: "12px",
-              fontWeight: "600",
-              whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
             }}
           >
-            {isAllTimeView ? "All Time" : "Daily"}
-          </button>
+            <div
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                backgroundColor: "#26a69a",
+                boxShadow: "0 0 8px rgba(38, 166, 154, 0.6)",
+              }}
+            />
+            <h2
+              style={{
+                margin: "0",
+                fontSize: "16px",
+                fontWeight: "700",
+                color: "#ffffff",
+                letterSpacing: "0.025em",
+                textShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
+              }}
+            >
+              Mood Chart - All Time
+            </h2>
+          </div>
 
           {/* Timeframe Selector - Compact */}
           <div
@@ -384,9 +328,7 @@ export default function CandlestickChart() {
           >
             <div style={{ textAlign: "center", color: "#71717a" }}>
               <div style={{ fontSize: "16px", fontWeight: "500" }}>
-                {isAllTimeView
-                  ? "No data available"
-                  : `No data for ${formatDate(selectedDate)}`}
+                No data available
               </div>
               <div style={{ fontSize: "13px", marginTop: "4px" }}>
                 Tap Buy or Sell to start trading
